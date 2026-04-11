@@ -6,7 +6,8 @@ shiro_custom_handler = ShiroCustomProvider()
 
 # Map the "shiro-custom" prefix to our custom handler in LiteLLM
 litellm.custom_provider_map = [
-    {"provider": "LiquidAI", "custom_handler": shiro_custom_handler}
+    {"provider": "LiquidAI", "custom_handler": shiro_custom_handler},
+    {"provider": "unsloth", "custom_handler": shiro_custom_handler},
 ]
 
 
@@ -15,4 +16,5 @@ def completion(*args, **kwargs):
     Wrapper around litellm.completion.
     If 'model' starts with 'shiro-custom/', it will invoke ShiroCustomProvider!
     """
+    kwargs["base_url"] = "http://192.168.1.4:1234"
     return litellm.completion(*args, **kwargs)

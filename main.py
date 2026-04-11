@@ -7,17 +7,22 @@ load_dotenv()
 from agentshiro.agent import Agent
 from agentshiro.loop import run_agent_loop
 from agentshiro.tools.bash import BashTool
-from agentshiro.tools.calculator import CalculatorTool
 
-COLOR_USER = "\033[92m" # Green
+COLOR_USER = "\033[92m"  # Green
 COLOR_RESET = "\033[0m"
+
+model_name = "LFM2.5-1.2B-Thinking-GGUF:BF16"
+# "LiquidAI/LFM2.5-1.2B-Instruct-GGUF"
+
 
 def main():
     tools = [BashTool()]
 
-    agent = Agent(model_name="LiquidAI/LFM2.5-1.2B-Instruct-GGUF", tools=tools)
+    agent = Agent(model_name=model_name, tools=tools)
 
-    print(f"\n\033[1m{COLOR_USER}Welcome to AgentShiro. Type 'exit' to quit.{COLOR_RESET}\033[0m\n")
+    print(
+        f"\n\033[1m{COLOR_USER}Welcome to AgentShiro. Type 'exit' to quit.{COLOR_RESET}\033[0m\n"
+    )
 
     while True:
         try:
@@ -27,7 +32,7 @@ def main():
                 break
 
             run_agent_loop(agent, user_input)
-            print() # visual padding between turns
+            print()  # visual padding between turns
 
         except KeyboardInterrupt:
             print("\nExiting...")

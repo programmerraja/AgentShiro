@@ -672,10 +672,9 @@ class TestRunner:
 
 
 def main():
-    """Main entry point for the evaluator"""
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    parent_dir = os.path.dirname(current_dir)  # Go up to project root
-    test_cases_file = os.path.join(parent_dir, "test_cases.json")
+    parent_dir = os.path.dirname(current_dir)
+    test_cases_file = os.path.join(parent_dir, "dataset/test_cases.json")
     template_dir = os.path.join(parent_dir, "template_life_system")
     test_runs_dir = os.path.join(parent_dir, "test_runs")
 

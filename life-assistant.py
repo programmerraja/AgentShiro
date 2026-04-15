@@ -89,7 +89,7 @@ def main():
         # Override generic AgentShiro system prompt
         agent.messages = [{"role": "system", "content": prompt}]
         # Initialize a new session ID
-        session_manager.create_session()
+        # session_manager.create_session()
 
     print(
         f"\n{COLOR_SYSTEM}[Mode Activated. Score: {score_data['points']}, Level: {score_data['level']}, Streak: {score_data['streak']}]{COLOR_RESET}\n"
@@ -133,7 +133,7 @@ def main():
             run_agent_loop(agent, user_input)
 
             # Save session and observability after every turn
-            session_manager.save_session(agent.messages)
+            # session_manager.save_session(agent.messages)
             # session_manager.log_observability(agent.messages)
 
             print()

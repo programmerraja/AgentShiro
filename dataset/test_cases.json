@@ -1,0 +1,266 @@
+{
+  "test_cases": [
+    {
+      "test_id": "TC-1.1",
+      "title": "Small task: zero friction, no alignment check",
+      "category": "Task Addition & Alignment",
+      "description": "User adds a simple, small task without any conflicts. System should ask for time, create daily file if missing, and add task without checking alignment.",
+      "difficulty": "easy",
+
+      "initial_state": {
+        "today": "2026-04-14",
+        "current_time": "10:00 AM",
+        "files_to_create": {
+          "state/gamification.json": {
+            "points": 100,
+            "streak": 3,
+            "level": 2
+          },
+          "areas/health.md": "Exercise daily, eat healthy food, sleep 8 hours",
+          "areas/career.md": "Build a transformer from scratch, contribute to open source"
+        }
+      },
+
+      "user_agent_prompt": "You are a busy professional planning your day. You just realized you need to buy milk for tonight's dinner. You want to add this task to your daily plan. Start by saying you want to add a task. The assistant will ask when you want to do it. Respond naturally with a time (e.g., 'Evening' or 'After work'). Once the assistant confirms the task has been added and you are satisfied, respond with exactly: [END]",
+
+      "ground_truth": {
+        "expected_tool_calls": ["readFile", "writeFile | insertFile"],
+        "must_happen": [
+          "Ask user for task time (since not provided)",
+          "Read today's daily file",
+          "Write/create the daily file with the task",
+          "Confirm task addition to user"
+        ],
+        "must_NOT_happen": [
+          "Check conflict with areas",
+          "Ask about alignment with goals",
+          "Multiple back-and-forth about the task"
+        ],
+        "key_checks": [
+          "Daily file was created (not exists initially)",
+          "Task was written with a time slot",
+          "No readFile of areas/*.md"
+        ]
+      },
+
+      "safeguards": {
+        "max_turns": 8,
+        "timeout_seconds": 120,
+        "required_tool_calls": ["end"]
+      }
+    },
+
+    {
+      "test_id": "TC-1.3",
+      "title": "Conflicting task: assistant asks 'why?' once",
+      "category": "Task Addition & Alignment",
+      "description": "User adds a task that conflicts with an existing goal. Assistant should detect conflict, ask why once, accept the reason, then add the task.",
+      "difficulty": "medium",
+
+      "initial_state": {
+        "today": "2026-04-14",
+        "current_time": "10:00 AM",
+        "files_to_create": {
+          "state/gamification.json": {
+            "points": 150,
+            "streak": 5,
+            "level": 3
+          },
+          "areas/health.md": "Exercise daily at 5 AM, avoid junk food, maintain 10-day streak",
+          "daily/2026/04/2026-04-14.md": "# Daily Plan - 2026-04-14\n\n## Morning\n### Health\n- [ ] Workout (5 AM - 6 AM)\n\n## Rest of Day\n### Career\n- [ ] Code review (2 PM - 3 PM)\n"
+        }
+      },
+
+      "user_agent_prompt": "You are someone who has been maintaining a 5-day health streak (exercising daily and eating clean). Today you're feeling exhausted from work and want to break your routine. You want to add a task to skip the gym and have pizza for a rest day. Start by telling the assistant you want to add this task. The assistant will ask why you want to do this (because it conflicts with your health goal). Respond honestly that you're very tired from work and need a rest day. Once the assistant agrees to add it with your reason, respond with: [END]",
+
+      "ground_truth": {
+        "expected_tool_calls": ["readFile", "writeFile | insertFile"],
+        "must_happen": [
+          "Detect conflict with health goal (exercise daily, avoid junk food)",
+          "Ask user why they want to skip gym and eat pizza",
+          "Wait for user's reason",
+          "Accept the reason and add the task with justification",
+          "Update the daily file with the rest day task"
+        ],
+        "must_NOT_happen": [
+          "Add task without asking why",
+          "Ask why multiple times",
+          "Refuse to add the task"
+        ],
+        "key_checks": [
+          "Conflict detection worked (read areas/health.md)",
+          "Asked why exactly once",
+          "Task added after reason given",
+          "Streak status was considered"
+        ]
+      },
+
+      "safeguards": {
+        "max_turns": 10,
+        "timeout_seconds": 120,
+        "required_tool_calls": ["end"]
+      }
+    },
+
+    {
+      "test_id": "TC-3.2",
+      "title": "Progress tracking: Are we on track towards goals?",
+      "category": "Query & Reflection",
+      "description": "User asks if they're on track towards their goals. Assistant should read goals and recent daily files, detect that no deep learning tasks were done, and provide actionable feedback.",
+      "difficulty": "hard",
+
+      "initial_state": {
+        "today": "2026-04-14",
+        "current_time": "5:00 PM",
+        "files_to_create": {
+          "state/gamification.json": {
+            "points": 200,
+            "streak": 7,
+            "level": 4
+          },
+          "goals/6month.md": "# 6-Month Goal\n\nBuild a transformer neural network from scratch and deploy it.\n\nSuccess: Complete transformer implementation with 90%+ accuracy on a dataset.",
+          "areas/career.md": "Deep learning: Daily practice on transformers. Build in public.",
+          "daily/2026/04/2026-04-12.md": "# Daily Plan - 2026-04-12\n\n## Morning\n### Health\n- [x] Workout (5 AM)\n\n## Evening\n### Career\n- [x] Code review (6 PM)\n\nNo deep learning today.",
+          "daily/2026/04/2026-04-13.md": "# Daily Plan - 2026-04-13\n\n## Morning\n### Health\n- [x] Workout (5 AM)\n\n## Evening\n### Family\n- [x] Call mom (7 PM)\n\nNo deep learning today.",
+          "daily/2026/04/2026-04-14.md": "# Daily Plan - 2026-04-14\n\n## Morning\n### Health\n- [x] Workout (5 AM)\n\n## Evening\n### Career\n- [ ] Deep learning on transformers (8 PM - 10 PM)\n- [x] Email check-in (6 PM)\n"
+        }
+      },
+
+      "user_agent_prompt": "You are an ambitious person with a 6-month goal to build a transformer from scratch. You've been feeling productive recently and want to check if you're actually making progress towards your goal. Ask the assistant if you're on track towards your goals. The assistant will analyze your recent daily plans and should notice that you haven't been doing deep learning tasks. Listen to their feedback and concern about your progress. Once they provide their analysis and you are satisfied, respond with: [END]",
+
+      "ground_truth": {
+        "expected_tool_calls": ["readFile"],
+        "must_happen": [
+          "Read the 6-month goal file",
+          "Read the career area file",
+          "Read the last 3 daily files (to detect pattern)",
+          "Detect that deep learning tasks are missing or not completed",
+          "Provide specific, actionable feedback about being off-track",
+          "Suggest adding daily deep learning block"
+        ],
+        "must_NOT_happen": [
+          "Generic encouragement without pattern analysis",
+          "Miss the absence of deep learning tasks",
+          "Fail to read necessary files"
+        ],
+        "key_checks": [
+          "Correctly identified 0 deep learning tasks in last 3 days",
+          "Connected to user's stated goal (transformer)",
+          "Suggested specific action (add daily deep learning block)",
+          "Pattern recognition evident in response"
+        ]
+      },
+
+      "safeguards": {
+        "max_turns": 6,
+        "timeout_seconds": 120,
+        "required_tool_calls": ["end"]
+      }
+    },
+
+    {
+      "test_id": "TC-4.1",
+      "title": "End of day: track completion and update streak",
+      "category": "End-of-Day & Gamification",
+      "description": "User reports what they completed today. Assistant should calculate alignment (3/5 tasks = 60%), reset streak if below 70%, update points, and ask for lessons learned.",
+      "difficulty": "medium",
+
+      "initial_state": {
+        "today": "2026-04-14",
+        "current_time": "9:00 PM",
+        "files_to_create": {
+          "state/gamification.json": {
+            "points": 150,
+            "streak": 3,
+            "level": 2
+          },
+          "daily/2026/04/2026-04-14.md": "# Daily Plan - 2026-04-14\n\n## Morning (4 AM - 9 AM)\n### Health\n- [ ] Workout (5 AM - 6 AM)\n\n### Career\n- [ ] Deep learning study (7 AM - 9 AM)\n\n## Evening (7 PM - 11 PM)\n### Family\n- [ ] Call mom (7 PM - 7:30 PM)\n\n### Happiness\n- [ ] Read a book (8 PM - 8:30 PM)\n\n### Career\n- [ ] Work on project (9 PM - 11 PM)\n"
+        }
+      },
+
+      "user_agent_prompt": "You're ending your day and want to report what you actually completed. You completed 3 out of 5 tasks: the workout, deep learning study, and called your mom. You missed reading and the project work. Tell the assistant you're done for the day and list what you completed and what you missed. The assistant should calculate your completion rate, update your streak (should reset from 3 to 0 since 60% < 70%), and update your points. Once the assistant confirms the update and asks if you want to log any lessons learned, respond with: [END]",
+
+      "ground_truth": {
+        "expected_tool_calls": ["readFile", "writeFile | insertFile"],
+        "must_happen": [
+          "Read today's daily plan file",
+          "Calculate completion: 3/5 = 60%",
+          "Detect that 60% < 70% (streak-breaking threshold)",
+          "Reset streak from 3 to 0",
+          "Calculate points: 3 tasks × 10 points = +30 points (new total: 180)",
+          "Update gamification.json with new streak and points",
+          "Ask user if they want to log lessons/mistakes"
+        ],
+        "must_NOT_happen": [
+          "Maintain streak at 3 (should reset to 0)",
+          "Give points without calculating correctly",
+          "Skip asking about lessons learned"
+        ],
+        "key_checks": [
+          "Correct streak reset calculation",
+          "Correct point calculation",
+          "gamification.json updated with streak=0, points=180",
+          "Empathetic message about streak reset"
+        ]
+      },
+
+      "safeguards": {
+        "max_turns": 8,
+        "timeout_seconds": 120,
+        "required_tool_calls": ["end"]
+      }
+    },
+
+    {
+      "test_id": "TC-7.3",
+      "title": "Edge case: duplicate task detection",
+      "category": "Edge Cases & Error Handling",
+      "description": "User tries to add a task that already exists in today's plan. Assistant should detect duplicate and ask if user wants to add another or change the time.",
+      "difficulty": "easy",
+
+      "initial_state": {
+        "today": "2026-04-14",
+        "current_time": "3:00 PM",
+        "files_to_create": {
+          "state/gamification.json": {
+            "points": 120,
+            "streak": 2,
+            "level": 2
+          },
+          "daily/2026/04/2026-04-14.md": "# Daily Plan - 2026-04-14\n\n## Morning\n### Health\n- [ ] Workout (5 AM - 6 AM)\n\n## Evening\n### Shopping\n- [ ] Buy milk (6 PM - 6:15 PM)\n\n### Career\n- [ ] Email responses (7 PM - 7:30 PM)\n"
+        }
+      },
+
+      "user_agent_prompt": "You're in the middle of your day and realize you want to add a shopping task. You ask to add 'buy milk'. However, you already have 'buy milk at 6 PM' in today's plan (you may have forgotten). The assistant should detect this duplicate and ask whether you want to: a) add another milk-buying task at a different time, or b) change the time of the existing one. Respond that you actually meant to move it to a later time (8 PM instead of 6 PM). Once the assistant confirms the update, respond with: [END]",
+
+      "ground_truth": {
+        "expected_tool_calls": ["readFile", "writeFile | insertFile"],
+        "must_happen": [
+          "Read today's daily file",
+          "Detect duplicate 'buy milk' task",
+          "Ask if user wants to add another or change the existing one",
+          "Wait for user's clarification",
+          "Update the time from 6 PM to 8 PM",
+          "Write updated daily file"
+        ],
+        "must_NOT_happen": [
+          "Blindly add another milk task",
+          "Ignore the duplicate",
+          "Delete the existing task without asking"
+        ],
+        "key_checks": [
+          "Duplicate detection worked correctly",
+          "User was asked for clarification",
+          "Time was updated from 6 PM to 8 PM",
+          "Daily file reflects the change"
+        ]
+      },
+
+      "safeguards": {
+        "max_turns": 8,
+        "timeout_seconds": 120,
+        "required_tool_calls": ["end"]
+      }
+    }
+  ]
+}

@@ -23,13 +23,18 @@ COLOR_RESET = "\033[0m"
 COLOR_SYSTEM = "\033[94m"  # Blue
 COLOR_ERROR = "\033[91m"  # Red
 
-model_name = "LiquidAI/LFM2.5-1.2B-Instruct-GGUF"
+model_name = "LiquidAI/LFM2.5-1.2B-Instruct-GGUF:BF16"
 model_name = "gpt-5.4-nano"
 model_name = "LiquidAI/LFM2.5-1.2B-Thinking-GGUF:BF16"
 model_name = "ollama/hf.co/unsloth/Phi-4-mini-instruct-GGUF:Q4_K_M"
 model_name = "ollama/gemma4:e2b"
 model_name = "ollama/qwen2.5:3b"
 model_name = "anthropic/google/gemma4-4-e4b"
+model_name = "LiquidAI/LFM2.5-1.2B-Instruct-GGUF:Q5_K_M"
+model_name = "anthropic/liquid/lfm2.5-1.2b"
+model_name = "nvidia_nim/qwen/qwen3-next-80b-a3b-instruct"
+# model_name = "nvidia_nim/minimaxai/minimax-m2.7"
+# model_name = "nvidia_nim/nvidia/nemotron-mini-4b-instruct"
 
 
 def main():
@@ -54,11 +59,6 @@ def main():
         return
 
     print(f"\n{COLOR_SYSTEM}=== Personal AI Life Assistant ==={COLOR_RESET}")
-    print("Select Agent:")
-    print("1. Daily Planner")
-    print("2. Weekly Analyzer")
-    print("3. Pattern Detector")
-    choice = input("Select agent (1/2/3): ")
 
     date_str = datetime.now().strftime("%Y-%m-%d")
     score_data = load_score()
@@ -83,18 +83,9 @@ def main():
             print(f"{COLOR_ERROR}Could not load session: {e}{COLOR_RESET}")
             return
     else:
-        # print("Select Agent:")
-        # print("1. Daily Planner")
-        # print("2. Weekly Analyzer")
-        # print("3. Pattern Detector")
-        # choice = input("Select agent (1/2/3): ")
-
-        if choice not in ["1", "2", "3"]:
-            print("Invalid choice, defaulting to Daily Planner (1).")
-            choice = "1"
 
         print(f"\n{COLOR_SYSTEM}[Initializing Context & Placeholders...]{COLOR_RESET}")
-        prompt = build_system_prompt(choice, model_name)
+        prompt = build_system_prompt()
         # Override generic AgentShiro system prompt
         agent.messages = [{"role": "system", "content": prompt}]
         # Initialize a new session ID

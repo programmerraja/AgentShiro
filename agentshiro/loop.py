@@ -17,7 +17,6 @@ COLOR_ERROR = "\033[91m"  # Red
 
 def run_agent_loop(agent: Agent, user_input: str, **kwargs) -> str:
     agent.add_user_message(user_input)
-    # print(agent.model_name, "s")
     while True:
         tools = agent.get_provider_tools()
 
@@ -44,7 +43,6 @@ def run_agent_loop(agent: Agent, user_input: str, **kwargs) -> str:
 
         print()
 
-        # We rely strictly on standard litellm chunk reconstruction.
         try:
             reconstructed = stream_chunk_builder(chunks, messages=agent.messages)
             response_message = reconstructed.choices[0].message

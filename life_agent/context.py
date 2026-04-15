@@ -52,14 +52,12 @@ def generate_last_7_days_summary(
         return f"Failed to generate summary: {str(e)}"
 
 
-def build_context_snapshot(model_name: str):
+def build_context_snapshot():
     now = datetime.datetime.now()
     today_date = now.strftime("%Y-%m-%d")
 
     # Load state
     score_data = load_score()
-    aboutme = _read_file_safe("personal/aboutme.md")
-    memory = _read_file_safe("memory/memory.md")
     today_task_list = read_daily(today_date)
 
     # Compute basic variables
@@ -67,21 +65,20 @@ def build_context_snapshot(model_name: str):
     week_end = week_start + datetime.timedelta(days=6)
 
     context = {
-        "{{todayDate}}": today_date,
+        "{{TODAY_DATE}}": today_date,
         "{{currentTime}}": now.strftime("%H:%M:%S"),
         "{{dayOfWeek}}": now.strftime("%A"),
         "{{weekNumber}}": str(now.isocalendar()[1]),
         "{{weekStartDate}}": week_start.strftime("%Y-%m-%d"),
         "{{weekEndDate}}": week_end.strftime("%Y-%m-%d"),
-        "{{timeOfDay}}": (
+        "{{TIME_OF_DAY}}": (
             "morning" if now.hour < 12 else "afternoon" if now.hour < 18 else "evening"
         ),
-        "{{userName}}": "User (See aboutme.md)",
-        "{{todayTaskList}}": (
+        "{{TODAY_TASK_LIST}}": (
             today_task_list if today_task_list else "No tasks logged today."
         ),
-        "{{currentStreak}}": str(score_data.get("streak", 0)),
-        "{{currentPoints}}": str(score_data.get("points", 0)),
+        "{{CURRENT_STREAK}}": str(score_data.get("streak", 0)),
+        "{{CURRENT_POINTS}}": str(score_data.get("points", 0)),
         "{{currentLevel}}": str(score_data.get("level", 1)),
         "{{currentStatus}}": score_data.get("status", "IN GAME"),
     }
@@ -89,10 +86,9 @@ def build_context_snapshot(model_name: str):
     # Generate the 7 days summary dynamically using the mini-agent
     # context["{{last7DaysSummary}}"] = generate_last_7_days_summary(model_name)
 
-    # Write to context-snapshot.json
-    snapshot_path = os.path.join(BASE_DIR, "system", "context-snapshot.json")
-    os.makedirs(os.path.dirname(snapshot_path), exist_ok=True)
-    with open(snapshot_path, "w", encoding="utf-8") as f:
-        json.dump(context, f, indent=4)
+    # snapshot_path = os.path.join(BASE_DIR, "system", "context-snapshot.json")
+    # os.makedirs(os.path.dirname(snapshot_path), exist_ok=True)
+    # with open(snapshot_path, "w", encoding="utf-8") as f:
+    #     json.dump(context, f, indent=4)
 
     return context

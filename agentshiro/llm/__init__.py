@@ -16,5 +16,5 @@ def completion(*args, **kwargs):
     Wrapper around litellm.completion.
     If 'model' starts with 'shiro-custom/', it will invoke ShiroCustomProvider!
     """
-    kwargs["base_url"] = "http://192.168.1.4:1234"
+    # kwargs["base_url"] = "http://192.168.1.4:1234"
     return litellm.completion(*args, **kwargs)

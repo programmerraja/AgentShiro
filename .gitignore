@@ -207,3 +207,6 @@ marimo/_lsp/
 __marimo__/
 
 life-system/
+test_runs
+template_life_system
+test_cases.json

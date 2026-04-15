@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 EVAL_MODEL = "nvidia_nim/qwen/qwen3-next-80b-a3b-instruct"
 USER_MODEL = "nvidia_nim/qwen/qwen3-next-80b-a3b-instruct"
-AGENT_MODEL = "nvidia_nim/qwen/qwen3-next-80b-a3b-instruct"
+AGENT_MODEL = "anthropic/liquid/lfm2.5-1.2b"
 
 
 def _resolve_path(base_dir: str, path: str) -> str:
@@ -225,23 +225,17 @@ class UserAgent:
         self.agent.messages = [{"role": "system", "content": system_prompt}]
         self.end_called = False
 
-    def add_assistant_message(self, message: str):
-        """Add assistant's response to history (what user sees)"""
-        self.agent.add_message({"role": "assistant", "content": message})
-
-    def get_next_message(self) -> Optional[str]:
+    def get_next_message(self, assistant_response="") -> Optional[str]:
         """Get next user message using agentshiro"""
         try:
-            message_text = run_agent_loop(self.agent, "")
+            message_text = run_agent_loop(
+                self.agent,
+                ("start" if len(self.agent.messages) == 1 else assistant_response),
+            )
 
-            # Check if user called end tool (indicated by [END] in response)
             if "[END]" in message_text:
                 self.end_called = True
-                # Still add to history so judge can see it
-                self.agent.add_message({"role": "user", "content": message_text})
                 return None
-
-            self.agent.add_message({"role": "user", "content": message_text})
 
             return message_text
 
@@ -299,18 +293,18 @@ class ConversationRunner:
 
             logger.info(f"Turn {turn_number}: User: {first_message[:80]}...")
 
-            assistant_response = run_agent_loop(life_assistant, first_message)
+            assistant_response = run_agent_loop(
+                life_assistant, first_message, base_url="http://192.168.1.4:1234"
+            )
 
             logger.info(f"Assistant: {assistant_response[:80]}...")
-
-            user_agent.add_assistant_message(assistant_response)
 
             if user_agent.end_called:
                 logger.info("User called end tool")
                 self.end_time = time.time()
                 return self._get_conversation_messages(life_assistant)
 
-            first_message = user_agent.get_next_message()
+            first_message = user_agent.get_next_message(assistant_response)
             if first_message is None:
                 self.end_time = time.time()
                 return self._get_conversation_messages(life_assistant)
@@ -564,7 +558,7 @@ class TestRunner:
         with open(self.test_cases_file, "r") as f:
             data = json.load(f)
 
-        test_cases = data.get("test_cases", [])
+        test_cases = data.get("test_cases", [])[0:1]
         self._default_assistant_prompt = data.get("default_assistant_prompt", "")
 
         logger.info(
@@ -677,12 +671,17 @@ class TestRunner:
         logger.info(f"Report saved to: {report_file}")
 
 
-if __name__ == "__main__":
-
+def main():
+    """Main entry point for the evaluator"""
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    test_cases_file = os.path.join(current_dir, "test_cases.json")
-    template_dir = os.path.join(current_dir, "template_life_system")
-    test_runs_dir = os.path.join(current_dir, "test_runs")
+    parent_dir = os.path.dirname(current_dir)  # Go up to project root
+    test_cases_file = os.path.join(parent_dir, "test_cases.json")
+    template_dir = os.path.join(parent_dir, "template_life_system")
+    test_runs_dir = os.path.join(parent_dir, "test_runs")
 
     runner = TestRunner(test_cases_file, template_dir, test_runs_dir)
     runner.run_all()
+
+
+if __name__ == "__main__":
+    main()

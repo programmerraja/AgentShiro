@@ -1,13 +1,17 @@
 from datetime import datetime
 from typing import List, Dict, Any
+
+from agentshiro.session import SessionManager
 from .tools.base import BaseTool
 from .prompts import SYSTEM_PROMPT_TEMPLATE
+
 
 class Agent:
     def __init__(self, model_name: str, tools: List[BaseTool] = None):
         self.model_name = model_name
         self.tools = tools or []
         self.messages: List[Dict[str, Any]] = []
+        self.session_manager = SessionManager(observability_enabled=True)
         self._init_system_prompt()
 
     def _init_system_prompt(self):
@@ -26,9 +30,10 @@ class Agent:
         if not self.tools:
             return None
         return [tool.to_openai_tool() for tool in self.tools]
-        
+
     def add_user_message(self, content: str):
         self.messages.append({"role": "user", "content": content})
 
     def add_message(self, message: dict):
         self.messages.append(message)
+        self.session_manager.save_session(self.messages)

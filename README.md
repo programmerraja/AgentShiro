@@ -29,3 +29,8 @@ ollama.ts
 base.ts
 search.ts
 calculator.ts
+
+
+docker run --rm -it -v /home/boopathik/Pictures/Screenshots:/app/images -v /home/boopathik/.cache/huggingface:/root/.cache/huggingface lfm-vl-450m 
+
+docker build -t lfm-vl-450m .

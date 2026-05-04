@@ -2,7 +2,7 @@ use clap::Parser;
 use std::sync::Arc;
 use agentshiro::agent::AgentLoop;
 use agentshiro::life_agent::LifeAgent;
-use agentshiro::providers::{Provider, LiteLLMProvider};
+use agentshiro::providers::{Provider, NvidiaProvider};
 use agentshiro::utils::{setup_logging, Config};
 use agentshiro::cli::LifeAssistantCli;
 
@@ -17,15 +17,19 @@ async fn main() -> anyhow::Result<()> {
     }
 
     let config = Config::from_env()?;
-    let provider_name = cli.provider.unwrap_or_else(|| "nvidia_nim".to_string());
-    let model_id = cli.model.unwrap_or_else(|| "nvidia_nim/qwen/qwen3-next-80b-a3b-instruct".to_string());
+    let api_base = std::env::var("OPENAI_API_BASE_URL")
+        .unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let model_id = cli.model.unwrap_or_else(|| "meta/llama-3.1-8b-instruct".to_string());
+    let api_key = std::env::var("OPENAI_API_KEY").ok();
 
-    log::info!("Starting Life Assistant with provider: {}", provider_name);
+    log::info!("Starting Life Assistant with NVIDIA NIM provider at {}", api_base);
 
-    let model_string = format!("{}/{}", provider_name, model_id);
-    let provider: Arc<dyn Provider> = Arc::new(
-        LiteLLMProvider::new(model_string)
-    );
+    let mut nvidia_provider = NvidiaProvider::new(&api_base, &model_id);
+    if let Some(key) = api_key {
+        nvidia_provider = nvidia_provider.with_api_key(key);
+    }
+
+    let provider: Arc<dyn Provider> = Arc::new(nvidia_provider);
 
     match cli.command {
         agentshiro::cli::LifeCommands::Interactive { session: _ } => {

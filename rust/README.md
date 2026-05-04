@@ -361,3 +361,8 @@ For issues or questions:
 - Check the logs: `RUST_LOG=debug`
 - Review the architecture diagram in the main documentation
 - Compare with Python version behavior
+
+
+cargo run --bin life-assistant-cli interactive
+
+cargo build --release --target x86_64-unknown-linux-gnu --bin life-assistant-cli

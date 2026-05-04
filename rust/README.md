@@ -366,3 +366,32 @@ For issues or questions:
 cargo run --bin life-assistant-cli interactive
 
 cargo build --release --target x86_64-unknown-linux-gnu --bin life-assistant-cli
+
+
+# Download NDK 26 (latest stable)
+cd ~/Downloads
+wget https://dl.google.com/android/repository/android-ndk-r26-linux.zip
+unzip android-ndk-r26-linux.zip
+mv android-ndk-r26 ~/Android/ndk
+
+
+# Add ARM64 Android target
+rustup target add aarch64-linux-android
+
+# Create cargo config
+mkdir -p /home/boopathik/Documents/Personal\ Code/AgentShiro/rust/.cargo
+
+cat > /home/boopathik/Documents/Personal\ Code/AgentShiro/rust/.cargo/config.toml << 'EOF'
+[target.aarch64-linux-android]
+ar = "/home/boopathik/Android/ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-ar"
+linker = "/home/boopathik/Android/ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang"
+EOF
+
+
+cargo build --release --target aarch64-linux-android --bin life-assistant-cli
+
+
+cd /home/boopathik/Documents/Personal\ Code/AgentShiro/rust && \
+export CC_aarch64_linux_android="/home/boopathik/Android/ndk/27.0.12077973/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang" && \
+export AR_aarch64_linux_android="/home/boopathik/Android/ndk/27.0.12077973/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar" && \
+cargo build --release --target aarch64-linux-android --bin life-assistant-cli 2>&1 | grep -E "(Finished|error|warning:.*)" | head -20

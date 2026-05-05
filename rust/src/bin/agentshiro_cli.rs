@@ -1,7 +1,7 @@
 use clap::Parser;
 use std::sync::Arc;
 use agentshiro::agent::{Agent, AgentLoop, SessionManager};
-use agentshiro::providers::LiteLLMProvider;
+use agentshiro::providers::OpenAIProvider;
 use agentshiro::tools::ToolRegistry;
 use agentshiro::tools::builtin::{ReadFileTool, WriteFileTool, InsertFileTool};
 use agentshiro::utils::setup_logging;
@@ -17,17 +17,17 @@ async fn main() -> anyhow::Result<()> {
         std::env::set_var("RUST_LOG", "debug");
     }
 
-    log::info!("Starting AgentShiro CLI with provider: {}", cli.provider);
+    log::info!("Starting AgentShiro CLI with model: {}", cli.model);
 
-    let model_string = format!("{}/{}", cli.provider, cli.model);
-    let mut provider = LiteLLMProvider::new(model_string);
+    let api_key = cli.api_key
+        .or_else(|| std::env::var("OPENAI_API_KEY").ok())
+        .unwrap_or_else(|| "sk-default-key".to_string());
 
-    if let Some(api_base) = cli.api_base {
-        provider = provider.with_api_base(api_base);
-    }
-    if let Some(api_key) = cli.api_key {
-        provider = provider.with_api_key(api_key);
-    }
+    let provider = if let Some(api_base) = cli.api_base {
+        OpenAIProvider::with_api_base(&api_key, &api_base, &cli.model)
+    } else {
+        OpenAIProvider::new(&api_key, &cli.model)
+    };
 
     let provider: Arc<dyn agentshiro::providers::Provider> = Arc::new(provider);
 

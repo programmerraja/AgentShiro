@@ -3,9 +3,7 @@ use std::pin::Pin;
 use futures::Stream;
 use crate::models::{Message, ProviderResponse, ToolSchema};
 
-pub mod litellm;
-pub mod shiro_custom;
-pub mod nvidia;
+pub mod openai;
 
 pub type ProviderStream = Pin<Box<dyn Stream<Item = anyhow::Result<String>> + Send>>;
 
@@ -33,6 +31,4 @@ pub trait Provider: Send + Sync {
     fn name(&self) -> &str;
 }
 
-pub use litellm::LiteLLMProvider;
-pub use shiro_custom::ShiroCustomProvider;
-pub use nvidia::NvidiaProvider;
+pub use openai::OpenAIProvider;

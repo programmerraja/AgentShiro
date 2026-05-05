@@ -1,9 +1,9 @@
+use super::{Provider, ProviderStream};
+use crate::models::{Message, ProviderResponse, ToolCall, ToolSchema, Usage};
 use async_trait::async_trait;
 use regex::Regex;
 use serde_json::{json, Value};
 use std::collections::HashMap;
-use crate::models::{Message, ProviderResponse, ToolCall, ToolSchema, Usage};
-use super::{Provider, ProviderStream};
 
 pub struct NvidiaProvider {
     api_base: String,
@@ -84,14 +84,17 @@ impl Provider for NvidiaProvider {
         system_prompt: &str,
         tools: Vec<ToolSchema>,
     ) -> anyhow::Result<ProviderResponse> {
-        log::debug!("Calling NVIDIA provider at {} with model: {}", self.api_base, self.model);
+        log::debug!(
+            "Calling NVIDIA provider at {} with model: {}",
+            self.api_base,
+            self.model
+        );
 
         let client = reqwest::Client::new();
 
         // Build OpenAI-compatible request
-        let mut request_messages: Vec<Value> = vec![
-            json!({ "role": "system", "content": system_prompt })
-        ];
+        let mut request_messages: Vec<Value> =
+            vec![json!({ "role": "system", "content": system_prompt })];
 
         for msg in messages {
             request_messages.push(json!({
@@ -108,7 +111,12 @@ impl Provider for NvidiaProvider {
             "stream": false,
         });
 
-        let url = format!("{}/v1/chat/completions", self.api_base.trim_end_matches('/'));
+        let url = format!(
+            "{}/v1/chat/completions",
+            self.api_base.trim_end_matches('/')
+        );
+
+        // print!("{} {}", url, request_body);
 
         let mut req = client.post(&url).json(&request_body);
 
@@ -123,8 +131,15 @@ impl Provider for NvidiaProvider {
 
         let status = response.status();
         if !status.is_success() {
-            let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
-            return Err(anyhow::anyhow!("NVIDIA API error ({}): {}", status, error_text));
+            let error_text = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unknown error".to_string());
+            return Err(anyhow::anyhow!(
+                "NVIDIA API error ({}): {}",
+                status,
+                error_text
+            ));
         }
 
         let response_json: Value = response
@@ -152,12 +167,13 @@ impl Provider for NvidiaProvider {
             vec![]
         };
 
-        let usage = response_json
-            .get("usage")
-            .map(|u| Usage {
-                input_tokens: u.get("prompt_tokens").and_then(|v| v.as_u64()).unwrap_or(0) as u32,
-                output_tokens: u.get("completion_tokens").and_then(|v| v.as_u64()).unwrap_or(0) as u32,
-            });
+        let usage = response_json.get("usage").map(|u| Usage {
+            input_tokens: u.get("prompt_tokens").and_then(|v| v.as_u64()).unwrap_or(0) as u32,
+            output_tokens: u
+                .get("completion_tokens")
+                .and_then(|v| v.as_u64())
+                .unwrap_or(0) as u32,
+        });
 
         Ok(ProviderResponse {
             content,
